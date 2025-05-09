@@ -131,7 +131,7 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrExpiredToken
 		}
-		return nil, fmt.Errorf("w: %v", ErrInvalidToken, err)
+		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
 
 	// Extract the claims from the token
