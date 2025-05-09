@@ -32,3 +32,26 @@ func ExtractTokenFromRequest(r *http.Request) (string, error) {
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	return tokenString, nil
 }
+
+// Authenticate middleware verifies the JWT token and puts the claims in the
+// request context
+func (m *Middleware) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString, err := ExtractTokenFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := m.jwtService.ValidateToken(tokenString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		ctx := SetClaimsInContext(r.Context(), claims)
+
+		// Call the next handler with the context with claims
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
