@@ -110,3 +110,35 @@ func (s *Service) GenerateToken(userID string, roles []Role) (string, error) {
 
 	return tokenString, nil
 }
+
+// ValidateToken validates the JWT token and returns its claims if valid
+func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
+	// Parse the token with the signing method and key
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&Claims{},
+		func(token *jwt.Token) (interface{}, error) {
+			// Validate that the oken uses the expected signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return s.config.SigningKey, nil
+		},
+	)
+
+	if err != nil {
+		// Is it an expired token?
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrExpiredToken
+		}
+		return nil, fmt.Errorf("w: %v", ErrInvalidToken, err)
+	}
+
+	// Extract the claims from the token
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid {
+		return nil, ErrInvalidToken
+	}
+
+	return claims, nil
+}
