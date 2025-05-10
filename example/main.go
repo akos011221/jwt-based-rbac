@@ -98,7 +98,7 @@ func main() {
 	fmt.Println("Server starting on :8080")
 	fmt.Println("To access this API, use:")
 	fmt.Println("1) Get a token:		curl 'http://localhost:8080/login?user_id=123&role=admin'")
-	fmt.Println("2) Use token with API:		curl -H 'Authorization: Bearer TOKEN' http://localhost:8080/api/data'")
+	fmt.Println("2) Use token with API:		curl -H 'Authorization: Bearer TOKEN' http://localhost:8080/api/data")
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
