@@ -55,3 +55,43 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// RequirePermission middleware ensures the user has the required permission
+func (m *Middleware) RequirePermission(permission Permission) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, err := GetClaimsFromContext(r.Context())
+			if err != nil {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if !HasPermission(claims.Roles, permission) {
+				http.Error(w, ErrInsufficientPerms.Error(), http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// RequireRole middleware ensures the user has the required role
+func (m *Middleware) RequireRole(role Role) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims, err := GetClaimsFromContext(r.Context())
+			if err != nil {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if !HasRole(claims.Roles, role) {
+				http.Error(w, ErrInsufficientPerms.Error(), http.StatusForbidden)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
